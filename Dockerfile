@@ -73,28 +73,20 @@ RUN apk add --update --no-cache bash \
   				apache2 \
 				libxml2-dev \
 				apache2-utils
-
-RUN	mkdir /var/www/html/ && chown -R apache.www-data /var/www/html/ && \
-   
-    sed -i 's#^DocumentRoot ".*#DocumentRoot /var/www/html #g' /etc/apache2/httpd.conf && \
-    sed -i 's#AllowOverride none#AllowOverride All#' /etc/apache2/httpd.conf && \
-    sed -i 's#^ServerRoot .*#ServerRoot /web#g'  /etc/apache2/httpd.conf && \
-    sed -i 's/^#ServerName.*/ServerName webproxy/' /etc/apache2/httpd.conf && \
-    sed -i 's#^IncludeOptional /etc/apache2/conf#IncludeOptional /web/config/conf#g' /etc/apache2/httpd.conf && \
-    sed -i 's#PidFile "/run/.*#Pidfile "/web/run/httpd.pid"#g'  /etc/apache2/conf.d/mpm.conf && \
-    sed -i 's#Directory "/var/www/localhost/htdocs.*#Directory "/var/www/html/" >#g' /etc/apache2/httpd.conf && \
-    sed -i 's#Directory "/var/www/localhost/cgi-bin.*#Directory "/var/www/" >#g' /etc/apache2/httpd.conf && \
-
-    sed -i 's#/var/log/apache2/#/var/www/#g' /etc/logrotate.d/apache2 && \
-    sed -i 's/Options Indexes/Options /g' /etc/apache2/httpd.conf 
-
 RUN ln -s /usr/bin/php7 /usr/bin/php
 RUN curl -sS https://getcomposer.org/installer | php7 -- --install-dir=/usr/bin --filename=composer 
 
 RUN  rm -rf /var/cache/apk/*
 
-VOLUME /var/www/html
-WORKDIR /var/www/html
+# AllowOverride ALL
+RUN sed -i '264s#AllowOverride None#AllowOverride All#' /etc/apache2/httpd.conf
+
+#Rewrite Moduble Enable
+RUN sed -i 's#\#LoadModule rewrite_module modules/mod_rewrite.so#LoadModule rewrite_module modules/mod_rewrite.so#' /etc/apache2/httpd.conf
+RUN mkdir -p /run/apache2
+RUN rm /var/www/localhost/htdocs/index.html
+VOLUME  /var/www/localhost/htdocs/
+WORKDIR  /var/www/localhost/htdocs/
 
 EXPOSE 80
 EXPOSE 443
